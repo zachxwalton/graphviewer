@@ -30,11 +30,11 @@
   <body class="min-h-screen bg-ink-950 text-slate-100 antialiased">
     <header class="sticky top-0 z-40 border-b border-white/5 bg-ink-950/90 backdrop-blur">
       <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
-        <a href="https://github.com/zachxwalton/graphviewer" target="_blank" rel="noreferrer" class="group inline-flex items-center gap-2">
+        <a href="https://ds320.zwalton.dev/" class="group inline-flex items-center gap-2">
           <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-ink-800 ring-1 ring-white/10 group-hover:ring-purpleMid-500/40">
             <span class="h-2.5 w-2.5 rounded-full bg-purpleMid-500"></span>
           </span>
-          <span class="text-sm font-semibold tracking-wide text-white">Graph Viewer</span>
+          <span class="text-sm font-semibold tracking-wide text-white">Graph Algorithm Playground by Zach</span>
         </a>
         <a href="https://github.com/zachxwalton/graphviewer" target="_blank" rel="noreferrer" class="text-sm text-slate-300 hover:text-white">View on GitHub</a>
       </div>
@@ -48,7 +48,7 @@
       <!-- Graph Generator -->
       <section class="mb-6 rounded-2xl bg-gradient-to-br from-purpleMid-600/10 via-ink-900/60 to-ink-900/60 p-6 ring-2 ring-purpleMid-500/30">
         <h2 class="text-xl font-semibold text-white">Graph Generator</h2>
-        <p class="mt-1 text-sm text-slate-300">Customize and generate random graphs</p>
+        <p class="mt-1 text-sm text-slate-300">Customize and generate random graphs. Node colors show distance gradient (purple→pink→red) from universal first node.</p>
         
         <div class="mt-6 grid gap-6 md:grid-cols-2">
           <!-- Number of nodes -->
@@ -74,7 +74,7 @@
               placeholder="e.g. 1" 
               class="mt-2 w-full rounded-xl border-0 bg-ink-800 px-4 py-2.5 text-sm text-slate-200 ring-1 ring-white/10 focus:ring-2 focus:ring-purpleMid-500"
             />
-            <p class="mt-1 text-xs text-slate-500">Starting node for DFS, BFS, and Dijkstra trees. Node colors show distance gradient (purple→pink→red)</p>
+            <p class="mt-1 text-xs text-slate-500">Starting node for DFS, BFS, and Dijkstra trees.</p>
           </div>
 
           <!-- Directedness slider -->
@@ -169,6 +169,7 @@
         <p class="mt-1 text-sm text-slate-300">
           Run DFS from a starting node. Produces a tree of all reachable nodes with parent and descendant relationships.
         </p>
+        <p class="mt-1 text-xs text-slate-400">Tiebreaker: When multiple unvisited neighbors exist, explores in reverse order of connections (last connection first).</p>
         <div class="mt-4 flex flex-wrap items-end gap-4">
           <button type="button" id="run-dfs-tree" class="rounded-xl bg-purpleMid-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purpleMid-500">
             Generate DFS Tree
@@ -198,8 +199,9 @@
       <section class="mb-6 rounded-2xl bg-ink-900/60 p-6 ring-1 ring-white/10">
         <h2 class="text-lg font-semibold text-white">BFS Tree</h2>
         <p class="mt-1 text-sm text-slate-300">
-          Run BFS from a starting node. Produces a tree showing levels (distance from source).
+          Run BFS from a starting node. Produces a tree showing distance from first node.
         </p>
+        <p class="mt-1 text-xs text-slate-400">Tiebreaker: When multiple unvisited neighbors exist, explores in order of connections (first connection first).</p>
         <div class="mt-4 flex flex-wrap items-end gap-4">
           <button type="button" id="run-bfs-tree" class="rounded-xl bg-purpleMid-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purpleMid-500">
             Generate BFS Tree
@@ -222,6 +224,7 @@
         <p class="mt-1 text-sm text-slate-300">
           Run Dijkstra from a starting node. Produces a shortest-path tree showing distances (cost) from source.
         </p>
+        <p class="mt-1 text-xs text-slate-400">Tiebreaker: When multiple nodes have the same distance, processes in order of connections (first connection first).</p>
         <div class="mt-4 flex flex-wrap items-end gap-4">
           <button type="button" id="run-dijkstra-tree" class="rounded-xl bg-purpleMid-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purpleMid-500">
             Generate Dijkstra Tree
@@ -241,14 +244,14 @@
       <!-- Shortest path -->
       <section class="rounded-2xl bg-ink-900/60 p-6 ring-1 ring-white/10">
         <h2 class="text-lg font-semibold text-white">Shortest Path</h2>
-        <p class="mt-1 text-sm text-slate-300">Select two vertices and run an algorithm to find the shortest path between them.</p>
+        <p class="mt-1 text-sm text-slate-300">Select two nodes and run an algorithm to find the shortest path between them.</p>
         <div class="mt-4 flex flex-wrap items-end gap-4">
           <div>
-            <label class="block text-xs text-slate-400">Source vertex</label>
+            <label class="block text-xs text-slate-400">Source node</label>
             <input type="text" id="source-input" placeholder="e.g. 0" class="mt-1 w-32 rounded-lg bg-ink-800 px-3 py-2 text-sm text-slate-200 ring-1 ring-white/10" />
           </div>
           <div>
-            <label class="block text-xs text-slate-400">Target vertex</label>
+            <label class="block text-xs text-slate-400">Target node</label>
             <input type="text" id="target-input" placeholder="e.g. 10" class="mt-1 w-32 rounded-lg bg-ink-800 px-3 py-2 text-sm text-slate-200 ring-1 ring-white/10" />
           </div>
           <label class="flex cursor-pointer items-center gap-2 rounded-xl bg-ink-800 px-4 py-2 ring-1 ring-white/10 hover:ring-purpleMid-500/40">
@@ -272,7 +275,7 @@
       <section id="topological-sort-section" class="mt-6 rounded-2xl bg-ink-900/60 p-6 ring-1 ring-white/10 disabled">
         <h2 class="text-lg font-semibold text-white">Topological Sort</h2>
         <p class="mt-1 text-sm text-slate-300">
-          Linear ordering of vertices such that for every directed edge (u, v), u comes before v.
+          Linear ordering of vertices such that for every directed edge (u, v), u comes before v. Non-unique, there may be many answers—this just displays one. Use the verifier to check your answers.
         </p>
         <div id="topological-sort-disabled" class="mt-4 rounded-xl bg-ink-800/80 p-4 text-center text-sm text-slate-400">
           Graph must be acyclical and directional to generate a topological sort!
@@ -1269,7 +1272,7 @@
           const source = document.getElementById('source-input').value.trim();
           const target = document.getElementById('target-input').value.trim();
           if (!source || !target) {
-            document.getElementById('path-result').textContent = 'Enter source and target vertices.';
+            document.getElementById('path-result').textContent = 'Enter source and target nodes.';
             return;
           }
           if (!graphData.nodes.includes(source) || !graphData.nodes.includes(target)) {
