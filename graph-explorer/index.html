@@ -35,7 +35,13 @@
           </span>
           <span class="text-sm font-semibold tracking-wide text-white">Graph Viewer</span>
         </a>
-        <a href="https://github.com/zachxwalton/graphviewer" target="_blank" rel="noreferrer" class="text-sm text-slate-300 hover:text-white">View on GitHub</a>
+        <div class="flex items-center gap-4">
+          <label class="flex cursor-pointer items-center gap-2 rounded-xl bg-ink-800 px-4 py-2 ring-1 ring-white/10 hover:ring-purpleMid-500/40">
+            <input type="checkbox" id="advanced-algorithms-toggle" class="rounded text-purpleMid-500 focus:ring-purpleMid-500" />
+            <span class="text-sm text-slate-200">Advanced algorithms</span>
+          </label>
+          <a href="https://github.com/zachxwalton/graphviewer" target="_blank" rel="noreferrer" class="text-sm text-slate-300 hover:text-white">View on GitHub</a>
+        </div>
       </div>
     </header>
 
@@ -160,7 +166,11 @@
           <div class="flex flex-wrap gap-2">
             <button type="button" id="run-bfs" class="rounded-xl bg-purpleMid-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purpleMid-500">BFS</button>
             <button type="button" id="run-dfs" class="rounded-xl bg-ink-800 px-4 py-2 text-sm font-semibold text-slate-200 ring-1 ring-white/10 hover:bg-ink-700">DFS</button>
-            <button type="button" id="run-dijkstra" class="rounded-xl bg-ink-800 px-4 py-2 text-sm font-semibold text-slate-200 ring-1 ring-white/10 hover:bg-ink-700">Dijkstra</button>
+            <div id="advanced-algorithm-buttons" class="hidden flex gap-2">
+              <button type="button" id="run-dijkstra" class="rounded-xl bg-ink-800 px-4 py-2 text-sm font-semibold text-slate-200 ring-1 ring-white/10 hover:bg-ink-700">Dijkstra</button>
+              <button type="button" id="run-astar" class="rounded-xl bg-ink-800 px-4 py-2 text-sm font-semibold text-slate-200 ring-1 ring-white/10 hover:bg-ink-700">A*</button>
+              <button type="button" id="run-bellman-ford" class="rounded-xl bg-ink-800 px-4 py-2 text-sm font-semibold text-slate-200 ring-1 ring-white/10 hover:bg-ink-700">Bellman-Ford</button>
+            </div>
           </div>
         </div>
         <div id="path-result" class="mt-4 rounded-xl bg-ink-850/60 p-4 text-sm text-slate-200"></div>
@@ -204,7 +214,7 @@
           const nodes = Array.from({ length: n }, (_, i) => String(i));
           const edgeSet = new Set();
           const parent = Array.from({ length: n }, (_, i) => i);
-          
+
           const find = (x) => {
             if (parent[x] !== x) parent[x] = find(parent[x]);
             return parent[x];
@@ -219,23 +229,79 @@
             return false;
           };
 
-          for (let i = 0; i < n - 1; i++) {
-            edgeSet.add(`${i}\t${i + 1}`);
-            union(i, i + 1);
+          const addEdge = (u, v) => {
+            const key = u < v ? `${u}\t${v}` : `${v}\t${u}`;
+            if (!edgeSet.has(key)) {
+              edgeSet.add(key);
+              union(u, v);
+              return true;
+            }
+            return false;
+          };
+
+          // Tree-likedness: at 10/10 we build actual trees (root splits into 0-5 children).
+          // At 0 we build a cyclic chain + random edges. In between we blend.
+          const useTreeStructure = treeLikeness >= 6;
+
+          if (useTreeStructure) {
+            // Number of roots: 1 at 10/10, more as tree-likedness drops
+            const rootCount = treeLikeness >= 10 ? 1 : Math.max(1, Math.min(Math.ceil(n / 20), Math.ceil(10 - treeLikeness)));
+            const roots = [];
+            const shuffled = Array.from({ length: n }, (_, i) => i);
+            for (let i = shuffled.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            for (let i = 0; i < rootCount; i++) roots.push(shuffled[i]);
+
+            const inTree = new Set(roots);
+            const childrenCount = new Map();
+            roots.forEach((r) => childrenCount.set(r, 0));
+            const queue = [...roots];
+            const available = shuffled.filter((x) => !inTree.has(x));
+            let availIdx = 0;
+
+            while (queue.length > 0 && availIdx < available.length) {
+              const p = queue.shift();
+              const maxChildren = 5;
+              const numChildren = Math.min(
+                Math.floor(Math.random() * (maxChildren + 1)),
+                maxChildren - (childrenCount.get(p) || 0),
+                available.length - availIdx
+              );
+              for (let c = 0; c < numChildren; c++) {
+                const child = available[availIdx++];
+                addEdge(p, child);
+                inTree.add(child);
+                childrenCount.set(child, 0);
+                childrenCount.set(p, (childrenCount.get(p) || 0) + 1);
+                queue.push(child);
+              }
+            }
+
+            // Connect any leftover nodes to tree nodes that have < 5 children
+            while (availIdx < available.length) {
+              const child = available[availIdx++];
+              const candidates = [...inTree].filter((x) => (childrenCount.get(x) || 0) < 5);
+              const p = candidates.length > 0
+                ? candidates[Math.floor(Math.random() * candidates.length)]
+                : roots[Math.floor(Math.random() * roots.length)];
+              addEdge(p, child);
+              childrenCount.set(p, (childrenCount.get(p) || 0) + 1);
+            }
+          } else {
+            // Low tree-likedness: chain base + random edges (cyclic)
+            for (let i = 0; i < n - 1; i++) {
+              addEdge(i, i + 1);
+            }
           }
 
-          if (treeLikeness >= 10) {
-            const edges = Array.from(edgeSet).map((s) => {
-              const [from, to] = s.split('\t');
-              return { from, to };
-            });
-            return { nodes, edges };
-          }
-
+          // Add extra edges based on connectedness (cross-tree, or cycle-forming when tree-likedness is low)
+          const baseEdges = edgeSet.size;
           const maxEdges = Math.floor((n * (n - 1)) / 2);
-          const baseEdges = n - 1;
           const targetEdges = Math.floor(baseEdges + (connectedness / 10) * Math.min(n * 4, maxEdges - baseEdges));
-          
+          const skipCycleProbability = treeLikeness / 10;
+
           let added = 0;
           const maxAttempts = targetEdges * 10;
           let attempts = 0;
@@ -244,17 +310,12 @@
             const u = Math.floor(Math.random() * n);
             const v = Math.floor(Math.random() * n);
             attempts++;
-            
             if (u === v) continue;
             const key = u < v ? `${u}\t${v}` : `${v}\t${u}`;
             if (edgeSet.has(key)) continue;
 
             const wouldCreateCycle = find(u) === find(v);
-            const skipCycleProbability = treeLikeness / 10;
-            
-            if (wouldCreateCycle && Math.random() < skipCycleProbability) {
-              continue;
-            }
+            if (wouldCreateCycle && Math.random() < skipCycleProbability) continue;
 
             edgeSet.add(key);
             if (!wouldCreateCycle) union(u, v);
@@ -263,7 +324,7 @@
 
           const edges = Array.from(edgeSet).map((s) => {
             const [from, to] = s.split('\t');
-            return { from, to };
+            return { from: String(from), to: String(to) };
           });
           return { nodes, edges };
         }
@@ -454,6 +515,86 @@
                 dist.set(neighbor, alt);
                 prev.set(neighbor, node);
                 pq.push([alt, neighbor]);
+              }
+            }
+          }
+
+          const path = [];
+          let cur = end;
+          while (cur != null) {
+            path.unshift(cur);
+            cur = prev.get(cur);
+          }
+          return path[0] === start ? { path, visited } : { path: null, visited };
+        }
+
+        function astar(adj, start, end) {
+          const heuristic = (n) => {
+            const a = parseFloat(n);
+            const b = parseFloat(end);
+            return Number.isFinite(a) && Number.isFinite(b) ? Math.abs(a - b) : 0;
+          };
+          const dist = new Map();
+          const prev = new Map();
+          const visited = new Set();
+          const openSet = [[0 + heuristic(start), 0, start]];
+          dist.set(start, 0);
+
+          while (openSet.length > 0) {
+            openSet.sort((a, b) => a[0] - b[0]);
+            const [f, d, node] = openSet.shift();
+            if (visited.has(node)) continue;
+            visited.add(node);
+            if (node === end) break;
+
+            for (const neighbor of adj.get(node) || []) {
+              const alt = d + 1;
+              if (!dist.has(neighbor) || alt < dist.get(neighbor)) {
+                dist.set(neighbor, alt);
+                prev.set(neighbor, node);
+                openSet.push([alt + heuristic(neighbor), alt, neighbor]);
+              }
+            }
+          }
+
+          const path = [];
+          let cur = end;
+          while (cur != null) {
+            path.unshift(cur);
+            cur = prev.get(cur);
+          }
+          return path[0] === start ? { path, visited } : { path: null, visited };
+        }
+
+        function bellmanFord(adj, start, end, nodes) {
+          const dist = new Map();
+          const prev = new Map();
+          nodes.forEach((n) => dist.set(n, Infinity));
+          dist.set(start, 0);
+
+          for (let i = 0; i < nodes.length - 1; i++) {
+            for (const u of nodes) {
+              const d = dist.get(u);
+              if (d === Infinity) continue;
+              for (const v of adj.get(u) || []) {
+                const alt = d + 1;
+                if (alt < dist.get(v)) {
+                  dist.set(v, alt);
+                  prev.set(v, u);
+                }
+              }
+            }
+          }
+
+          const visited = new Set();
+          const stack = [start];
+          visited.add(start);
+          while (stack.length > 0) {
+            const u = stack.pop();
+            for (const v of adj.get(u) || []) {
+              if (!visited.has(v)) {
+                visited.add(v);
+                stack.push(v);
               }
             }
           }
@@ -757,6 +898,21 @@
           if (graphData) updateGraph();
         });
 
+        function updateAdvancedAlgorithmsVisibility() {
+          const toggle = document.getElementById('advanced-algorithms-toggle');
+          const advancedBtns = document.getElementById('advanced-algorithm-buttons');
+          if (toggle.checked) {
+            advancedBtns.classList.remove('hidden');
+            advancedBtns.classList.add('flex');
+          } else {
+            advancedBtns.classList.add('hidden');
+            advancedBtns.classList.remove('flex');
+          }
+        }
+
+        document.getElementById('advanced-algorithms-toggle').addEventListener('change', updateAdvancedAlgorithmsVisibility);
+        updateAdvancedAlgorithmsVisibility();
+
         document.getElementById('run-bfs').addEventListener('click', () =>
           runAlgorithm('BFS', (adj, s, t) => bfs(adj, s, t))
         );
@@ -765,6 +921,12 @@
         );
         document.getElementById('run-dijkstra').addEventListener('click', () =>
           runAlgorithm('Dijkstra', (adj, s, t) => dijkstra(adj, s, t))
+        );
+        document.getElementById('run-astar').addEventListener('click', () =>
+          runAlgorithm('A*', (adj, s, t) => astar(adj, s, t))
+        );
+        document.getElementById('run-bellman-ford').addEventListener('click', () =>
+          runAlgorithm('Bellman-Ford', (adj, s, t) => bellmanFord(adj, s, t, [...adj.keys()]))
         );
 
         document.getElementById('run-dfs-forest').addEventListener('click', async () => {
