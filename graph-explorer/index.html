@@ -57,11 +57,24 @@
             <input 
               type="number" 
               id="nodes-input" 
-              value="10" 
+              value="25" 
               min="5" 
               max="1000" 
               class="mt-2 w-full rounded-xl border-0 bg-ink-800 px-4 py-2.5 text-sm text-slate-200 ring-1 ring-white/10 focus:ring-2 focus:ring-purpleMid-500"
             />
+          </div>
+
+          <!-- Universal first node -->
+          <div>
+            <label class="block text-sm font-medium text-slate-300">Universal first node</label>
+            <input 
+              type="text" 
+              id="universal-first-node" 
+              value="1" 
+              placeholder="e.g. 1" 
+              class="mt-2 w-full rounded-xl border-0 bg-ink-800 px-4 py-2.5 text-sm text-slate-200 ring-1 ring-white/10 focus:ring-2 focus:ring-purpleMid-500"
+            />
+            <p class="mt-1 text-xs text-slate-500">Starting node for DFS, BFS, and Dijkstra trees. Node colors show distance gradient (purple→pink→red)</p>
           </div>
 
           <!-- Directedness slider -->
@@ -88,14 +101,14 @@
           <div>
             <div class="flex items-end justify-between">
               <label class="block text-sm font-medium text-slate-300">Connectedness</label>
-              <span id="connectedness-value" class="text-xs text-purpleMid-400">5</span>
+              <span id="connectedness-value" class="text-xs text-purpleMid-400">3</span>
             </div>
             <input 
               type="range" 
               id="connectedness-slider" 
               min="0" 
               max="10" 
-              value="5" 
+              value="3" 
               class="mt-2 w-full"
             />
             <div class="mt-1 flex justify-between text-xs text-slate-500">
@@ -104,10 +117,10 @@
             </div>
           </div>
 
-          <!-- Cyclic vs Acyclic slider -->
+          <!-- Cyclicity slider -->
           <div>
             <div class="flex items-end justify-between">
-              <label class="block text-sm font-medium text-slate-300">Cyclic vs Acyclic</label>
+              <label class="block text-sm font-medium text-slate-300">Cyclicity</label>
               <span id="tree-likeness-value" class="text-xs text-purpleMid-400">5</span>
             </div>
             <input 
@@ -157,10 +170,6 @@
           Run DFS from a starting node. Produces a tree of all reachable nodes with parent and descendant relationships.
         </p>
         <div class="mt-4 flex flex-wrap items-end gap-4">
-          <div>
-            <label class="block text-xs text-slate-400">Start node</label>
-            <input type="text" id="dfs-start-input" value="1" placeholder="e.g. 1" class="mt-1 w-32 rounded-lg bg-ink-800 px-3 py-2 text-sm text-slate-200 ring-1 ring-white/10" />
-          </div>
           <button type="button" id="run-dfs-tree" class="rounded-xl bg-purpleMid-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purpleMid-500">
             Generate DFS Tree
           </button>
@@ -192,10 +201,6 @@
           Run BFS from a starting node. Produces a tree showing levels (distance from source).
         </p>
         <div class="mt-4 flex flex-wrap items-end gap-4">
-          <div>
-            <label class="block text-xs text-slate-400">Start node</label>
-            <input type="text" id="bfs-start-input" value="1" placeholder="e.g. 1" class="mt-1 w-32 rounded-lg bg-ink-800 px-3 py-2 text-sm text-slate-200 ring-1 ring-white/10" />
-          </div>
           <button type="button" id="run-bfs-tree" class="rounded-xl bg-purpleMid-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purpleMid-500">
             Generate BFS Tree
           </button>
@@ -218,10 +223,6 @@
           Run Dijkstra from a starting node. Produces a shortest-path tree showing distances (cost) from source.
         </p>
         <div class="mt-4 flex flex-wrap items-end gap-4">
-          <div>
-            <label class="block text-xs text-slate-400">Start node</label>
-            <input type="text" id="dijkstra-start-input" value="1" placeholder="e.g. 1" class="mt-1 w-32 rounded-lg bg-ink-800 px-3 py-2 text-sm text-slate-200 ring-1 ring-white/10" />
-          </div>
           <button type="button" id="run-dijkstra-tree" class="rounded-xl bg-purpleMid-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purpleMid-500">
             Generate Dijkstra Tree
           </button>
@@ -257,8 +258,8 @@
           <div class="flex flex-wrap gap-2">
             <button type="button" id="run-bfs" class="rounded-xl bg-purpleMid-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purpleMid-500">BFS</button>
             <button type="button" id="run-dfs" class="rounded-xl bg-ink-800 px-4 py-2 text-sm font-semibold text-slate-200 ring-1 ring-white/10 hover:bg-ink-700">DFS</button>
+            <button type="button" id="run-dijkstra" class="rounded-xl bg-ink-800 px-4 py-2 text-sm font-semibold text-slate-200 ring-1 ring-white/10 hover:bg-ink-700">Dijkstra</button>
             <div id="advanced-algorithm-buttons" class="hidden flex gap-2">
-              <button type="button" id="run-dijkstra" class="rounded-xl bg-ink-800 px-4 py-2 text-sm font-semibold text-slate-200 ring-1 ring-white/10 hover:bg-ink-700">Dijkstra</button>
               <button type="button" id="run-astar" class="rounded-xl bg-ink-800 px-4 py-2 text-sm font-semibold text-slate-200 ring-1 ring-white/10 hover:bg-ink-700">A*</button>
               <button type="button" id="run-bellman-ford" class="rounded-xl bg-ink-800 px-4 py-2 text-sm font-semibold text-slate-200 ring-1 ring-white/10 hover:bg-ink-700">Bellman-Ford</button>
             </div>
@@ -432,8 +433,20 @@
         let lastDijkstraTree = null;
         let topoNetwork = null;
 
-        function buildGraph(nodes, edges) {
-          const nodeList = nodes.map((id) => ({ id, label: String(id) }));
+        function buildGraph(nodes, edges, distanceMap, maxDistance, firstNode) {
+          const nodeList = nodes.map((id) => {
+            const dist = distanceMap ? distanceMap.get(id) : 0;
+            const max = maxDistance ?? 0;
+            const bg = distanceMap ? getColorForDistance(dist, max) : '#4a5568';
+            const border = distanceMap ? getColorForDistance(dist, max) : '#718096';
+            const isFirst = firstNode && String(id) === String(firstNode);
+            return {
+              id,
+              label: String(id),
+              color: { background: isFirst ? '#fbbf24' : bg, border: isFirst ? '#ffffff' : border },
+              borderWidth: isFirst ? 2 : 1,
+            };
+          });
           const edgeList = edges.map((e, i) => ({
             id: i,
             from: e.from,
@@ -453,6 +466,16 @@
           return adj;
         }
 
+        function buildAdjacencyBidirectional(nodes, edges) {
+          const adj = new Map();
+          for (const n of nodes) adj.set(n, []);
+          for (const e of edges) {
+            adj.get(e.from).push(e.to);
+            if (e.from !== e.to) adj.get(e.to).push(e.from);
+          }
+          return adj;
+        }
+
         function buildDirectedAdjacency(nodes, edges) {
           const adj = new Map();
           for (const n of nodes) adj.set(n, []);
@@ -462,13 +485,50 @@
           return adj;
         }
 
+        function computeDistancesFrom(nodes, edges, start, ignoreDirection) {
+          const adj = ignoreDirection ? buildAdjacencyBidirectional(nodes, edges) : buildAdjacency(nodes, edges);
+          const dist = new Map();
+          nodes.forEach((n) => dist.set(n, Infinity));
+          dist.set(start, 0);
+          const queue = [start];
+          while (queue.length > 0) {
+            const u = queue.shift();
+            const d = dist.get(u);
+            for (const v of adj.get(u) || []) {
+              if (dist.get(v) === Infinity) {
+                dist.set(v, d + 1);
+                queue.push(v);
+              }
+            }
+          }
+          return dist;
+        }
+
+        function getColorForDistance(distance, maxDistance) {
+          const gray = '#4a5568';
+          if (distance === Infinity || distance === undefined) return gray;
+          const purple = { r: 124, g: 77, b: 255 };
+          const pink = { r: 236, g: 72, b: 153 };
+          const red = { r: 239, g: 68, b: 68 };
+          const lerp = (c1, c2, t) => {
+            const r = Math.round(c1.r + (c2.r - c1.r) * t);
+            const g = Math.round(c1.g + (c2.g - c1.g) * t);
+            const b = Math.round(c1.b + (c2.b - c1.b) * t);
+            return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+          };
+          if (maxDistance === 0) return lerp(purple, red, 0);
+          const x = Math.min(1, distance / maxDistance);
+          const t = (Math.exp(2 * x) - 1) / (Math.exp(2) - 1);
+          if (t <= 0.5) return lerp(purple, pink, t * 2);
+          return lerp(pink, red, (t - 0.5) * 2);
+        }
+
         function renderGraph(data) {
           const container = document.getElementById('graph-container');
           const options = {
             nodes: {
               shape: 'dot',
               size: 12,
-              color: { background: '#4a5568', border: '#718096' },
               font: { color: '#e2e8f0', size: 10 },
             },
             edges: {
@@ -506,7 +566,19 @@
 
         function updateGraph() {
           if (!graphData) return;
-          const visData = buildGraph(graphData.nodes, graphData.edges);
+          const firstNode = document.getElementById('universal-first-node').value.trim();
+          const directedness = parseInt(document.getElementById('directedness-slider')?.value ?? 0, 10);
+          const cyclicity = parseInt(document.getElementById('tree-likeness-slider')?.value ?? 0, 10);
+          const ignoreDirection = (directedness === 10) && (cyclicity === 0);
+          const distanceMap = graphData.nodes.includes(firstNode)
+            ? computeDistancesFrom(graphData.nodes, graphData.edges, firstNode, ignoreDirection)
+            : null;
+          const maxDistance = distanceMap
+            ? Math.max(...[...distanceMap.values()].filter((d) => d !== Infinity), 0)
+            : 0;
+          graphData.distanceMap = distanceMap;
+          graphData.maxDistance = maxDistance;
+          const visData = buildGraph(graphData.nodes, graphData.edges, distanceMap, maxDistance, firstNode);
           renderGraph(visData);
         }
 
@@ -518,19 +590,22 @@
         function highlightPath(path, visited) {
           if (!network || !graphData) return;
           const nodes = graphData.nodes;
+          const dist = graphData.distanceMap;
+          const maxDist = graphData.maxDistance || 0;
+          const firstNode = document.getElementById('universal-first-node')?.value?.trim();
           const edgeSet = new Set();
           for (let i = 0; i < path.length - 1; i++) {
             edgeSet.add(`${path[i]}-${path[i + 1]}`);
             edgeSet.add(`${path[i + 1]}-${path[i]}`);
           }
 
-          const nodeUpdates = nodes.map((n) => ({
-            id: n,
-            color: {
-              background: path.includes(n) ? '#7c4dff' : visited.has(n) ? 'rgba(124, 77, 255, 0.4)' : '#4a5568',
-              border: path.includes(n) ? '#9d79ff' : '#718096',
-            },
-          }));
+          const nodeUpdates = nodes.map((n) => {
+            const isFirst = firstNode && String(n) === String(firstNode);
+            const baseColor = dist ? getColorForDistance(dist.get(n) ?? Infinity, maxDist) : '#4a5568';
+            const bg = isFirst ? '#fbbf24' : (path.includes(n) ? '#7c4dff' : visited.has(n) ? 'rgba(124, 77, 255, 0.5)' : baseColor);
+            const border = isFirst ? '#ffffff' : (path.includes(n) ? '#9d79ff' : visited.has(n) ? '#9d79ff' : baseColor);
+            return { id: n, color: { background: bg, border }, ...(isFirst && { borderWidth: 2 }) };
+          });
           network.body.data.nodes.update(nodeUpdates);
 
           const edgeUpdates = graphData.edges.map((e, i) => {
@@ -544,10 +619,15 @@
 
         function resetHighlight() {
           if (!network || !graphData) return;
-          const nodeUpdates = graphData.nodes.map((n) => ({
-            id: n,
-            color: { background: '#4a5568', border: '#718096' },
-          }));
+          const dist = graphData.distanceMap;
+          const maxDist = graphData.maxDistance || 0;
+          const firstNode = document.getElementById('universal-first-node')?.value?.trim();
+          const nodeUpdates = graphData.nodes.map((n) => {
+            const isFirst = firstNode && String(n) === String(firstNode);
+            const c = isFirst ? '#fbbf24' : (dist ? getColorForDistance(dist.get(n) ?? Infinity, maxDist) : '#4a5568');
+            const border = isFirst ? '#ffffff' : c;
+            return { id: n, color: { background: c, border }, ...(isFirst && { borderWidth: 2 }) };
+          });
           network.body.data.nodes.update(nodeUpdates);
           const edgeUpdates = graphData.edges.map((e, i) => ({
             id: i,
@@ -903,7 +983,7 @@
           return { roots, visitOrder, parent, children, preOrder, postOrder };
         }
 
-        function buildForestGraphData(forest, showPrePost) {
+        function buildForestGraphData(forest, showPrePost, distanceMap, maxDistance) {
           const roots = new Set(forest.roots);
           const nodeList = forest.visitOrder.map((id) => {
             const pre = forest.preOrder.get(id);
@@ -918,12 +998,13 @@
               : (isRoot
                 ? `Root: ${id}\ndescendants: [${desc.join(', ')}]`
                 : `Node: ${id}\nparent: ${forest.parent.get(id)}\ndescendants: [${desc.join(', ')}]`);
-            
+            const c = distanceMap ? getColorForDistance(distanceMap.get(id) ?? Infinity, maxDistance || 0) : (isRoot ? '#7c4dff' : '#4a5568');
             return {
               id,
               label,
               title,
-              color: isRoot ? { background: '#7c4dff', border: '#9d79ff' } : { background: '#4a5568', border: '#718096' },
+              color: { background: isRoot ? '#fbbf24' : c, border: isRoot ? '#ffffff' : c },
+              borderWidth: isRoot ? 2 : 1,
               font: { multi: true, size: 11 },
             };
           });
@@ -1020,7 +1101,7 @@
           }
         }
 
-        function buildBfsTreeGraphData(bfsTree, showDistance) {
+        function buildBfsTreeGraphData(bfsTree, showDistance, distanceMap, maxDistance) {
           const root = bfsTree.root;
           const nodeList = bfsTree.visitOrder.map((id) => {
             const dist = bfsTree.distance.get(id);
@@ -1034,12 +1115,13 @@
               : (isRoot
                 ? `Root: ${id}\ndescendants: [${desc.join(', ')}]`
                 : `Node: ${id}\nparent: ${bfsTree.parent.get(id)}\ndescendants: [${desc.join(', ')}]`);
-
+            const c = distanceMap ? getColorForDistance(distanceMap.get(id) ?? Infinity, maxDistance || 0) : (isRoot ? '#7c4dff' : '#4a5568');
             return {
               id,
               label,
               title,
-              color: isRoot ? { background: '#7c4dff', border: '#9d79ff' } : { background: '#4a5568', border: '#718096' },
+              color: { background: isRoot ? '#fbbf24' : c, border: isRoot ? '#ffffff' : c },
+              borderWidth: isRoot ? 2 : 1,
               font: { multi: true, size: 11 },
             };
           });
@@ -1089,8 +1171,8 @@
           }
         }
 
-        function buildDijkstraTreeGraphData(tree, showDistance) {
-          return buildBfsTreeGraphData(tree, showDistance);
+        function buildDijkstraTreeGraphData(tree, showDistance, distanceMap, maxDistance) {
+          return buildBfsTreeGraphData(tree, showDistance, distanceMap, maxDistance);
         }
 
         function renderDijkstraTreeGraph(data) {
@@ -1223,6 +1305,17 @@
           treeLikenessValue.textContent = e.target.value;
           updateTopologicalSortSectionVisibility();
         });
+        treeLikenessSlider.addEventListener('change', () => {
+          if (graphData) {
+            updateGraph();
+            const firstNode = document.getElementById('universal-first-node').value.trim();
+            if (firstNode && graphData.nodes.includes(firstNode)) {
+              runDfsForest();
+              runBfsTree();
+              runDijkstraTree();
+            }
+          }
+        });
 
         const directednessSlider = document.getElementById('directedness-slider');
         const directednessValue = document.getElementById('directedness-value');
@@ -1230,6 +1323,17 @@
         directednessSlider.addEventListener('input', (e) => {
           directednessValue.textContent = e.target.value;
           updateTopologicalSortSectionVisibility();
+        });
+        directednessSlider.addEventListener('change', () => {
+          if (graphData) {
+            updateGraph();
+            const firstNode = document.getElementById('universal-first-node').value.trim();
+            if (firstNode && graphData.nodes.includes(firstNode)) {
+              runDfsForest();
+              runBfsTree();
+              runDijkstraTree();
+            }
+          }
         });
 
         function updateTopologicalSortSectionVisibility() {
@@ -1264,6 +1368,21 @@
           
           const { nodes, edges } = generateSampleGraph(n, connectedness, treeLikeness, directedness);
           loadGraph(nodes, edges);
+          runDfsForest();
+          runBfsTree();
+          runDijkstraTree();
+          runTopologicalSort();
+        });
+
+        document.getElementById('universal-first-node').addEventListener('change', () => {
+          if (!graphData) return;
+          updateGraph();
+          const firstNode = document.getElementById('universal-first-node').value.trim();
+          if (firstNode && graphData.nodes.includes(firstNode)) {
+            runDfsForest();
+            runBfsTree();
+            runDijkstraTree();
+          }
         });
 
         document.getElementById('fit-btn').addEventListener('click', () => {
@@ -1311,7 +1430,7 @@
             document.getElementById('dfs-forest-result').textContent = 'Load a graph first.';
             return;
           }
-          const startNode = document.getElementById('dfs-start-input').value.trim();
+          const startNode = document.getElementById('universal-first-node').value.trim();
           if (!startNode) {
             document.getElementById('dfs-forest-result').textContent = 'Enter a start node.';
             return;
@@ -1342,7 +1461,7 @@
           progressEl.classList.add('hidden');
           lastForest = forest;
           const showPrePost = document.getElementById('dfs-show-prepost').checked;
-          const forestData = buildForestGraphData(forest, showPrePost);
+          const forestData = buildForestGraphData(forest, showPrePost, graphData.distanceMap, graphData.maxDistance);
           renderForestGraph(forestData);
           document.getElementById('dfs-forest-result').textContent = formatDfsForestOutput(forest, showPrePost);
         }
@@ -1350,7 +1469,7 @@
         function refreshForestDisplay() {
           if (!lastForest) return;
           const showPrePost = document.getElementById('dfs-show-prepost').checked;
-          const forestData = buildForestGraphData(lastForest, showPrePost);
+          const forestData = buildForestGraphData(lastForest, showPrePost, graphData?.distanceMap, graphData?.maxDistance);
           renderForestGraph(forestData);
           document.getElementById('dfs-forest-result').textContent = formatDfsForestOutput(lastForest, showPrePost);
         }
@@ -1363,7 +1482,7 @@
             document.getElementById('bfs-tree-result').textContent = 'Load a graph first.';
             return;
           }
-          const startNode = document.getElementById('bfs-start-input').value.trim();
+          const startNode = document.getElementById('universal-first-node').value.trim();
           if (!startNode) {
             document.getElementById('bfs-tree-result').textContent = 'Enter a start node.';
             return;
@@ -1377,7 +1496,7 @@
           const tree = bfsTree(adj, startNode);
           lastBfsTree = tree;
           const showDistance = document.getElementById('bfs-show-distance').checked;
-          const treeData = buildBfsTreeGraphData(tree, showDistance);
+          const treeData = buildBfsTreeGraphData(tree, showDistance, graphData.distanceMap, graphData.maxDistance);
           renderBfsTreeGraph(treeData);
           document.getElementById('bfs-tree-result').textContent = formatBfsTreeOutput(tree, showDistance);
         }
@@ -1385,7 +1504,7 @@
         function refreshBfsTreeDisplay() {
           if (!lastBfsTree) return;
           const showDistance = document.getElementById('bfs-show-distance').checked;
-          const treeData = buildBfsTreeGraphData(lastBfsTree, showDistance);
+          const treeData = buildBfsTreeGraphData(lastBfsTree, showDistance, graphData?.distanceMap, graphData?.maxDistance);
           renderBfsTreeGraph(treeData);
           document.getElementById('bfs-tree-result').textContent = formatBfsTreeOutput(lastBfsTree, showDistance);
         }
@@ -1401,7 +1520,7 @@
             document.getElementById('dijkstra-tree-result').textContent = 'Load a graph first.';
             return;
           }
-          const startNode = document.getElementById('dijkstra-start-input').value.trim();
+          const startNode = document.getElementById('universal-first-node').value.trim();
           if (!startNode) {
             document.getElementById('dijkstra-tree-result').textContent = 'Enter a start node.';
             return;
@@ -1415,7 +1534,7 @@
           const tree = dijkstraTree(adj, startNode);
           lastDijkstraTree = tree;
           const showDistance = document.getElementById('dijkstra-show-distance').checked;
-          const treeData = buildDijkstraTreeGraphData(tree, showDistance);
+          const treeData = buildDijkstraTreeGraphData(tree, showDistance, graphData.distanceMap, graphData.maxDistance);
           renderDijkstraTreeGraph(treeData);
           document.getElementById('dijkstra-tree-result').textContent = formatDijkstraTreeOutput(tree, showDistance);
         }
@@ -1423,7 +1542,7 @@
         function refreshDijkstraTreeDisplay() {
           if (!lastDijkstraTree) return;
           const showDistance = document.getElementById('dijkstra-show-distance').checked;
-          const treeData = buildDijkstraTreeGraphData(lastDijkstraTree, showDistance);
+          const treeData = buildDijkstraTreeGraphData(lastDijkstraTree, showDistance, graphData?.distanceMap, graphData?.maxDistance);
           renderDijkstraTreeGraph(treeData);
           document.getElementById('dijkstra-tree-result').textContent = formatDijkstraTreeOutput(lastDijkstraTree, showDistance);
         }
@@ -1509,14 +1628,15 @@
           if (forestNetwork) forestNetwork.fit({ animation: true });
         });
 
-        // Startup: generate default graph and run DFS, BFS, Dijkstra trees
+        // Startup: generate default graph and run DFS, BFS, Dijkstra trees, topological sort
         (function init() {
           updateTopologicalSortSectionVisibility();
-          const { nodes, edges } = generateSampleGraph(10, 5, 5, 0);
+          const { nodes, edges } = generateSampleGraph(25, 3, 5, 0);
           loadGraph(nodes, edges);
           runDfsForest();
           runBfsTree();
           runDijkstraTree();
+          runTopologicalSort();
         })();
       })();
     </script>
