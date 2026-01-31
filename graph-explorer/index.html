@@ -20,7 +20,8 @@
       };
     </script>
     <style>
-      #graph-container, #dfs-forest-container { width: 100%; height: 500px; background: #0f1219; border-radius: 1rem; }
+      #graph-container, #dfs-forest-container, #bfs-tree-container, #dijkstra-tree-container, #topological-sort-container { width: 100%; height: 500px; background: #0f1219; border-radius: 1rem; }
+      #topological-sort-section.disabled { opacity: 0.6; pointer-events: none; }
       .vis-network canvas { border-radius: 1rem; }
       .path-edge { stroke: #7c4dff !important; stroke-width: 3 !important; }
       .visited-node { background: rgba(124, 77, 255, 0.4) !important; }
@@ -35,13 +36,7 @@
           </span>
           <span class="text-sm font-semibold tracking-wide text-white">Graph Viewer</span>
         </a>
-        <div class="flex items-center gap-4">
-          <label class="flex cursor-pointer items-center gap-2 rounded-xl bg-ink-800 px-4 py-2 ring-1 ring-white/10 hover:ring-purpleMid-500/40">
-            <input type="checkbox" id="advanced-algorithms-toggle" class="rounded text-purpleMid-500 focus:ring-purpleMid-500" />
-            <span class="text-sm text-slate-200">Advanced algorithms</span>
-          </label>
-          <a href="https://github.com/zachxwalton/graphviewer" target="_blank" rel="noreferrer" class="text-sm text-slate-300 hover:text-white">View on GitHub</a>
-        </div>
+        <a href="https://github.com/zachxwalton/graphviewer" target="_blank" rel="noreferrer" class="text-sm text-slate-300 hover:text-white">View on GitHub</a>
       </div>
     </header>
 
@@ -62,25 +57,30 @@
             <input 
               type="number" 
               id="nodes-input" 
-              value="50" 
+              value="10" 
               min="5" 
               max="1000" 
               class="mt-2 w-full rounded-xl border-0 bg-ink-800 px-4 py-2.5 text-sm text-slate-200 ring-1 ring-white/10 focus:ring-2 focus:ring-purpleMid-500"
             />
           </div>
 
-          <!-- Directed/Undirected -->
+          <!-- Directedness slider -->
           <div>
-            <label class="block text-sm font-medium text-slate-300">Graph type</label>
-            <div class="mt-2 flex gap-3">
-              <label class="flex cursor-pointer items-center gap-2 rounded-xl bg-ink-800 px-4 py-2.5 ring-1 ring-white/10 hover:ring-purpleMid-500/40">
-                <input type="radio" name="graph-type" value="undirected" checked class="text-purpleMid-500 focus:ring-purpleMid-500" />
-                <span class="text-sm text-slate-200">Undirected</span>
-              </label>
-              <label class="flex cursor-pointer items-center gap-2 rounded-xl bg-ink-800 px-4 py-2.5 ring-1 ring-white/10 hover:ring-purpleMid-500/40">
-                <input type="radio" name="graph-type" value="directed" class="text-purpleMid-500 focus:ring-purpleMid-500" />
-                <span class="text-sm text-slate-200">Directed</span>
-              </label>
+            <div class="flex items-end justify-between">
+              <label class="block text-sm font-medium text-slate-300">Directedness</label>
+              <span id="directedness-value" class="text-xs text-purpleMid-400">0</span>
+            </div>
+            <input 
+              type="range" 
+              id="directedness-slider" 
+              min="0" 
+              max="10" 
+              value="0" 
+              class="mt-2 w-full"
+            />
+            <div class="mt-1 flex justify-between text-xs text-slate-500">
+              <span>Undirected</span>
+              <span>Directed</span>
             </div>
           </div>
 
@@ -104,10 +104,10 @@
             </div>
           </div>
 
-          <!-- Tree-likeness slider -->
+          <!-- Cyclic vs Acyclic slider -->
           <div>
             <div class="flex items-end justify-between">
-              <label class="block text-sm font-medium text-slate-300">Tree-likeness</label>
+              <label class="block text-sm font-medium text-slate-300">Cyclic vs Acyclic</label>
               <span id="tree-likeness-value" class="text-xs text-purpleMid-400">5</span>
             </div>
             <input 
@@ -119,8 +119,8 @@
               class="mt-2 w-full"
             />
             <div class="mt-1 flex justify-between text-xs text-slate-500">
+              <span>Acyclic</span>
               <span>Cyclic</span>
-              <span>Tree</span>
             </div>
           </div>
         </div>
@@ -150,49 +150,27 @@
         </div>
       </section>
 
-      <!-- Shortest path -->
-      <section class="rounded-2xl bg-ink-900/60 p-6 ring-1 ring-white/10">
-        <h2 class="text-lg font-semibold text-white">Shortest Path</h2>
-        <p class="mt-1 text-sm text-slate-300">Select two vertices and run an algorithm to find the shortest path between them.</p>
-        <div class="mt-4 flex flex-wrap items-end gap-4">
-          <div>
-            <label class="block text-xs text-slate-400">Source vertex</label>
-            <input type="text" id="source-input" placeholder="e.g. 0" class="mt-1 w-32 rounded-lg bg-ink-800 px-3 py-2 text-sm text-slate-200 ring-1 ring-white/10" />
-          </div>
-          <div>
-            <label class="block text-xs text-slate-400">Target vertex</label>
-            <input type="text" id="target-input" placeholder="e.g. 10" class="mt-1 w-32 rounded-lg bg-ink-800 px-3 py-2 text-sm text-slate-200 ring-1 ring-white/10" />
-          </div>
-          <div class="flex flex-wrap gap-2">
-            <button type="button" id="run-bfs" class="rounded-xl bg-purpleMid-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purpleMid-500">BFS</button>
-            <button type="button" id="run-dfs" class="rounded-xl bg-ink-800 px-4 py-2 text-sm font-semibold text-slate-200 ring-1 ring-white/10 hover:bg-ink-700">DFS</button>
-            <div id="advanced-algorithm-buttons" class="hidden flex gap-2">
-              <button type="button" id="run-dijkstra" class="rounded-xl bg-ink-800 px-4 py-2 text-sm font-semibold text-slate-200 ring-1 ring-white/10 hover:bg-ink-700">Dijkstra</button>
-              <button type="button" id="run-astar" class="rounded-xl bg-ink-800 px-4 py-2 text-sm font-semibold text-slate-200 ring-1 ring-white/10 hover:bg-ink-700">A*</button>
-              <button type="button" id="run-bellman-ford" class="rounded-xl bg-ink-800 px-4 py-2 text-sm font-semibold text-slate-200 ring-1 ring-white/10 hover:bg-ink-700">Bellman-Ford</button>
-            </div>
-          </div>
-        </div>
-        <div id="path-result" class="mt-4 rounded-xl bg-ink-850/60 p-4 text-sm text-slate-200"></div>
-      </section>
-
-      <!-- DFS Forest -->
-      <section class="mt-6 rounded-2xl bg-ink-900/60 p-6 ring-1 ring-white/10">
-        <h2 class="text-lg font-semibold text-white">DFS Forest</h2>
+      <!-- DFS Tree -->
+      <section class="mb-6 rounded-2xl bg-ink-900/60 p-6 ring-1 ring-white/10">
+        <h2 class="text-lg font-semibold text-white">DFS Tree</h2>
         <p class="mt-1 text-sm text-slate-300">
           Run DFS from a starting node. Produces a tree of all reachable nodes with parent and descendant relationships.
         </p>
         <div class="mt-4 flex flex-wrap items-end gap-4">
           <div>
             <label class="block text-xs text-slate-400">Start node</label>
-            <input type="text" id="dfs-start-input" placeholder="e.g. 0" class="mt-1 w-32 rounded-lg bg-ink-800 px-3 py-2 text-sm text-slate-200 ring-1 ring-white/10" />
+            <input type="text" id="dfs-start-input" value="1" placeholder="e.g. 1" class="mt-1 w-32 rounded-lg bg-ink-800 px-3 py-2 text-sm text-slate-200 ring-1 ring-white/10" />
           </div>
-          <button type="button" id="run-dfs-forest" class="rounded-xl bg-purpleMid-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purpleMid-500">
-            Generate DFS Forest
+          <button type="button" id="run-dfs-tree" class="rounded-xl bg-purpleMid-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purpleMid-500">
+            Generate DFS Tree
           </button>
-          <button type="button" id="forest-fit-btn" class="rounded-xl bg-ink-800 px-4 py-2 text-sm font-semibold text-slate-200 ring-1 ring-white/10 hover:bg-ink-700 hover:text-white">
-            Fit forest
+          <button type="button" id="dfs-tree-fit-btn" class="rounded-xl bg-ink-800 px-4 py-2 text-sm font-semibold text-slate-200 ring-1 ring-white/10 hover:bg-ink-700 hover:text-white">
+            Fit tree
           </button>
+          <label class="flex cursor-pointer items-center gap-2 rounded-xl bg-ink-800 px-4 py-2 ring-1 ring-white/10 hover:ring-purpleMid-500/40">
+            <input type="checkbox" id="dfs-show-prepost" class="rounded text-purpleMid-500 focus:ring-purpleMid-500" />
+            <span class="text-sm text-slate-200">Show pre/post order</span>
+          </label>
         </div>
         <div id="dfs-forest-progress" class="mt-4 hidden rounded-xl bg-ink-850/60 p-4">
           <div class="mb-2 flex justify-between text-sm text-slate-300">
@@ -206,11 +184,121 @@
         <div id="dfs-forest-container" class="mt-4"></div>
         <div id="dfs-forest-result" class="mt-4 max-h-48 overflow-auto rounded-xl bg-ink-850/60 p-4 font-mono text-xs text-slate-200"></div>
       </section>
+
+      <!-- BFS Tree -->
+      <section class="mb-6 rounded-2xl bg-ink-900/60 p-6 ring-1 ring-white/10">
+        <h2 class="text-lg font-semibold text-white">BFS Tree</h2>
+        <p class="mt-1 text-sm text-slate-300">
+          Run BFS from a starting node. Produces a tree showing levels (distance from source).
+        </p>
+        <div class="mt-4 flex flex-wrap items-end gap-4">
+          <div>
+            <label class="block text-xs text-slate-400">Start node</label>
+            <input type="text" id="bfs-start-input" value="1" placeholder="e.g. 1" class="mt-1 w-32 rounded-lg bg-ink-800 px-3 py-2 text-sm text-slate-200 ring-1 ring-white/10" />
+          </div>
+          <button type="button" id="run-bfs-tree" class="rounded-xl bg-purpleMid-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purpleMid-500">
+            Generate BFS Tree
+          </button>
+          <button type="button" id="bfs-tree-fit-btn" class="rounded-xl bg-ink-800 px-4 py-2 text-sm font-semibold text-slate-200 ring-1 ring-white/10 hover:bg-ink-700 hover:text-white">
+            Fit tree
+          </button>
+          <label class="flex cursor-pointer items-center gap-2 rounded-xl bg-ink-800 px-4 py-2 ring-1 ring-white/10 hover:ring-purpleMid-500/40">
+            <input type="checkbox" id="bfs-show-distance" class="rounded text-purpleMid-500 focus:ring-purpleMid-500" />
+            <span class="text-sm text-slate-200">Show distance</span>
+          </label>
+        </div>
+        <div id="bfs-tree-container" class="mt-4"></div>
+        <div id="bfs-tree-result" class="mt-4 max-h-48 overflow-auto rounded-xl bg-ink-850/60 p-4 font-mono text-xs text-slate-200"></div>
+      </section>
+
+      <!-- Dijkstra Tree -->
+      <section class="mb-6 rounded-2xl bg-ink-900/60 p-6 ring-1 ring-white/10">
+        <h2 class="text-lg font-semibold text-white">Dijkstra Tree</h2>
+        <p class="mt-1 text-sm text-slate-300">
+          Run Dijkstra from a starting node. Produces a shortest-path tree showing distances (cost) from source.
+        </p>
+        <div class="mt-4 flex flex-wrap items-end gap-4">
+          <div>
+            <label class="block text-xs text-slate-400">Start node</label>
+            <input type="text" id="dijkstra-start-input" value="1" placeholder="e.g. 1" class="mt-1 w-32 rounded-lg bg-ink-800 px-3 py-2 text-sm text-slate-200 ring-1 ring-white/10" />
+          </div>
+          <button type="button" id="run-dijkstra-tree" class="rounded-xl bg-purpleMid-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purpleMid-500">
+            Generate Dijkstra Tree
+          </button>
+          <button type="button" id="dijkstra-tree-fit-btn" class="rounded-xl bg-ink-800 px-4 py-2 text-sm font-semibold text-slate-200 ring-1 ring-white/10 hover:bg-ink-700 hover:text-white">
+            Fit tree
+          </button>
+          <label class="flex cursor-pointer items-center gap-2 rounded-xl bg-ink-800 px-4 py-2 ring-1 ring-white/10 hover:ring-purpleMid-500/40">
+            <input type="checkbox" id="dijkstra-show-distance" class="rounded text-purpleMid-500 focus:ring-purpleMid-500" />
+            <span class="text-sm text-slate-200">Show distance</span>
+          </label>
+        </div>
+        <div id="dijkstra-tree-container" class="mt-4"></div>
+        <div id="dijkstra-tree-result" class="mt-4 max-h-48 overflow-auto rounded-xl bg-ink-850/60 p-4 font-mono text-xs text-slate-200"></div>
+      </section>
+
+      <!-- Shortest path -->
+      <section class="rounded-2xl bg-ink-900/60 p-6 ring-1 ring-white/10">
+        <h2 class="text-lg font-semibold text-white">Shortest Path</h2>
+        <p class="mt-1 text-sm text-slate-300">Select two vertices and run an algorithm to find the shortest path between them.</p>
+        <div class="mt-4 flex flex-wrap items-end gap-4">
+          <div>
+            <label class="block text-xs text-slate-400">Source vertex</label>
+            <input type="text" id="source-input" placeholder="e.g. 0" class="mt-1 w-32 rounded-lg bg-ink-800 px-3 py-2 text-sm text-slate-200 ring-1 ring-white/10" />
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400">Target vertex</label>
+            <input type="text" id="target-input" placeholder="e.g. 10" class="mt-1 w-32 rounded-lg bg-ink-800 px-3 py-2 text-sm text-slate-200 ring-1 ring-white/10" />
+          </div>
+          <label class="flex cursor-pointer items-center gap-2 rounded-xl bg-ink-800 px-4 py-2 ring-1 ring-white/10 hover:ring-purpleMid-500/40">
+            <input type="checkbox" id="advanced-algorithms-toggle" class="rounded text-purpleMid-500 focus:ring-purpleMid-500" />
+            <span class="text-sm text-slate-200">Advanced algorithms</span>
+          </label>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" id="run-bfs" class="rounded-xl bg-purpleMid-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purpleMid-500">BFS</button>
+            <button type="button" id="run-dfs" class="rounded-xl bg-ink-800 px-4 py-2 text-sm font-semibold text-slate-200 ring-1 ring-white/10 hover:bg-ink-700">DFS</button>
+            <div id="advanced-algorithm-buttons" class="hidden flex gap-2">
+              <button type="button" id="run-dijkstra" class="rounded-xl bg-ink-800 px-4 py-2 text-sm font-semibold text-slate-200 ring-1 ring-white/10 hover:bg-ink-700">Dijkstra</button>
+              <button type="button" id="run-astar" class="rounded-xl bg-ink-800 px-4 py-2 text-sm font-semibold text-slate-200 ring-1 ring-white/10 hover:bg-ink-700">A*</button>
+              <button type="button" id="run-bellman-ford" class="rounded-xl bg-ink-800 px-4 py-2 text-sm font-semibold text-slate-200 ring-1 ring-white/10 hover:bg-ink-700">Bellman-Ford</button>
+            </div>
+          </div>
+        </div>
+        <div id="path-result" class="mt-4 rounded-xl bg-ink-850/60 p-4 text-sm text-slate-200"></div>
+      </section>
+
+      <!-- Topological Sort -->
+      <section id="topological-sort-section" class="mt-6 rounded-2xl bg-ink-900/60 p-6 ring-1 ring-white/10 disabled">
+        <h2 class="text-lg font-semibold text-white">Topological Sort</h2>
+        <p class="mt-1 text-sm text-slate-300">
+          Linear ordering of vertices such that for every directed edge (u, v), u comes before v.
+        </p>
+        <div id="topological-sort-disabled" class="mt-4 rounded-xl bg-ink-800/80 p-4 text-center text-sm text-slate-400">
+          Graph must be acyclical and directional to generate a topological sort!
+        </div>
+        <div id="topological-sort-enabled" class="mt-4 hidden">
+          <div class="flex flex-wrap items-end gap-4">
+            <button type="button" id="run-topological-sort" class="rounded-xl bg-purpleMid-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purpleMid-500">
+              Generate Topological Sort
+            </button>
+            <div>
+              <label class="block text-xs text-slate-400">Verify order (e.g. 1, 3, 2, 5, 4)</label>
+              <input type="text" id="topological-sort-verify-input" placeholder="e.g. 1, 3, 2, 5, 4" class="mt-1 w-64 rounded-lg bg-ink-800 px-3 py-2 text-sm text-slate-200 ring-1 ring-white/10" />
+            </div>
+            <button type="button" id="verify-topological-sort" class="rounded-xl bg-ink-800 px-4 py-2 text-sm font-semibold text-slate-200 ring-1 ring-white/10 hover:bg-ink-700">
+              Verify non-unique topological sort
+            </button>
+          </div>
+          <div id="topological-sort-verify-result" class="mt-2 rounded-xl bg-ink-850/60 p-4 text-sm text-slate-200 hidden"></div>
+          <div id="topological-sort-order" class="mt-4 rounded-xl bg-ink-850/60 p-4 font-mono text-sm text-slate-200"></div>
+          <div id="topological-sort-container" class="mt-4"></div>
+        </div>
+      </section>
     </main>
 
     <script>
       (function () {
-        function generateSampleGraph(n, connectedness, treeLikeness) {
+        function generateSampleGraph(n, connectedness, treeLikeness, directedness) {
           const nodes = Array.from({ length: n }, (_, i) => String(i));
           const edgeSet = new Set();
           const parent = Array.from({ length: n }, (_, i) => i);
@@ -322,9 +410,14 @@
             added++;
           }
 
+          const directednessRatio = directedness / 10;
           const edges = Array.from(edgeSet).map((s) => {
             const [from, to] = s.split('\t');
-            return { from: String(from), to: String(to) };
+            return {
+              from: String(from),
+              to: String(to),
+              directed: Math.random() < directednessRatio,
+            };
           });
           return { nodes, edges };
         }
@@ -332,29 +425,39 @@
         let graphData = null;
         let network = null;
         let forestNetwork = null;
-        let isDirected = false;
+        let bfsNetwork = null;
+        let dijkstraNetwork = null;
+        let lastForest = null;
+        let lastBfsTree = null;
+        let lastDijkstraTree = null;
+        let topoNetwork = null;
 
-        function getGraphType() {
-          return document.querySelector('input[name="graph-type"]:checked').value === 'directed';
-        }
-
-        function buildGraph(nodes, edges, directed) {
+        function buildGraph(nodes, edges) {
           const nodeList = nodes.map((id) => ({ id, label: String(id) }));
           const edgeList = edges.map((e, i) => ({
             id: i,
             from: e.from,
             to: e.to,
-            arrows: directed ? 'to' : undefined,
+            arrows: e.directed ? 'to' : undefined,
           }));
           return { nodes: nodeList, edges: edgeList };
         }
 
-        function buildAdjacency(nodes, edges, directed) {
+        function buildAdjacency(nodes, edges) {
           const adj = new Map();
           for (const n of nodes) adj.set(n, []);
           for (const e of edges) {
             adj.get(e.from).push(e.to);
-            if (!directed && e.from !== e.to) adj.get(e.to).push(e.from);
+            if (!e.directed && e.from !== e.to) adj.get(e.to).push(e.from);
+          }
+          return adj;
+        }
+
+        function buildDirectedAdjacency(nodes, edges) {
+          const adj = new Map();
+          for (const n of nodes) adj.set(n, []);
+          for (const e of edges) {
+            if (e.directed) adj.get(e.from).push(e.to);
           }
           return adj;
         }
@@ -403,8 +506,7 @@
 
         function updateGraph() {
           if (!graphData) return;
-          isDirected = getGraphType();
-          const visData = buildGraph(graphData.nodes, graphData.edges, isDirected);
+          const visData = buildGraph(graphData.nodes, graphData.edges);
           renderGraph(visData);
         }
 
@@ -419,7 +521,7 @@
           const edgeSet = new Set();
           for (let i = 0; i < path.length - 1; i++) {
             edgeSet.add(`${path[i]}-${path[i + 1]}`);
-            if (!isDirected) edgeSet.add(`${path[i + 1]}-${path[i]}`);
+            edgeSet.add(`${path[i + 1]}-${path[i]}`);
           }
 
           const nodeUpdates = nodes.map((n) => ({
@@ -608,6 +710,116 @@
           return path[0] === start ? { path, visited } : { path: null, visited };
         }
 
+        function topologicalSort(adj, nodes) {
+          const visited = new Set();
+          const stack = [];
+          function visit(u) {
+            if (visited.has(u)) return;
+            visited.add(u);
+            for (const v of adj.get(u) || []) visit(v);
+            stack.push(u);
+          }
+          for (const n of nodes) visit(n);
+          return stack.reverse();
+        }
+
+        function verifyTopologicalSort(order, nodes, edges) {
+          const directedEdges = edges.filter((e) => e.directed);
+          const nodeSet = new Set(nodes.map(String));
+          const orderStrs = order.map((n) => String(n).trim()).filter(Boolean);
+          const uniqueOrder = new Set(orderStrs);
+          if (uniqueOrder.size !== orderStrs.length) {
+            return { valid: false, message: 'Invalid: order contains duplicate nodes.' };
+          }
+          const missing = nodes.filter((n) => !uniqueOrder.has(String(n)));
+          const extra = orderStrs.filter((n) => !nodeSet.has(n));
+          if (missing.length > 0) return { valid: false, message: `Invalid: missing nodes: ${missing.join(', ')}.` };
+          if (extra.length > 0) return { valid: false, message: `Invalid: unknown nodes: ${extra.join(', ')}.` };
+          const indexOf = new Map();
+          orderStrs.forEach((n, i) => indexOf.set(n, i));
+          for (const e of directedEdges) {
+            const u = String(e.from);
+            const v = String(e.to);
+            const iu = indexOf.get(u);
+            const iv = indexOf.get(v);
+            if (iu === undefined || iv === undefined) {
+              const missingNode = iu === undefined ? u : v;
+              return { valid: false, message: `Invalid: node "${missingNode}" not in order.` };
+            }
+            if (iu >= iv) {
+              return { valid: false, message: `Invalid: edge (${u}, ${v}) violated — ${u} must come before ${v}.` };
+            }
+          }
+          return { valid: true, message: 'Valid topological sort!' };
+        }
+
+        function bfsTree(adj, start) {
+          const visited = new Set();
+          const parent = new Map();
+          const children = new Map();
+          const distance = new Map();
+          const visitOrder = [];
+
+          const queue = [start];
+          visited.add(start);
+          parent.set(start, null);
+          children.set(start, []);
+          distance.set(start, 0);
+          visitOrder.push(start);
+
+          while (queue.length > 0) {
+            const u = queue.shift();
+            const d = distance.get(u);
+            for (const v of adj.get(u) || []) {
+              if (!visited.has(v)) {
+                visited.add(v);
+                parent.set(v, u);
+                children.set(v, []);
+                children.get(u).push(v);
+                distance.set(v, d + 1);
+                visitOrder.push(v);
+                queue.push(v);
+              }
+            }
+          }
+          return { root: start, visitOrder, parent, children, distance };
+        }
+
+        function dijkstraTree(adj, start) {
+          const dist = new Map();
+          const prev = new Map();
+          const visited = new Set();
+          const visitOrder = [];
+          const pq = [[0, start]];
+          dist.set(start, 0);
+
+          while (pq.length > 0) {
+            pq.sort((a, b) => a[0] - b[0]);
+            const [d, node] = pq.shift();
+            if (visited.has(node)) continue;
+            visited.add(node);
+            visitOrder.push(node);
+
+            for (const neighbor of adj.get(node) || []) {
+              const alt = d + 1;
+              if (!dist.has(neighbor) || alt < dist.get(neighbor)) {
+                dist.set(neighbor, alt);
+                prev.set(neighbor, node);
+                pq.push([alt, neighbor]);
+              }
+            }
+          }
+
+          const children = new Map();
+          visitOrder.forEach((n) => children.set(n, []));
+          for (const [child, p] of prev) {
+            if (p != null) children.get(p).push(child);
+          }
+          const distance = new Map();
+          visitOrder.forEach((n) => distance.set(n, dist.get(n)));
+          return { root: start, visitOrder, parent: prev, children, distance };
+        }
+
         function dfsForest(adj, start) {
           const visited = new Set();
           const parent = new Map();
@@ -691,20 +903,26 @@
           return { roots, visitOrder, parent, children, preOrder, postOrder };
         }
 
-        function buildForestGraphData(forest) {
+        function buildForestGraphData(forest, showPrePost) {
           const roots = new Set(forest.roots);
           const nodeList = forest.visitOrder.map((id) => {
             const pre = forest.preOrder.get(id);
             const post = forest.postOrder.get(id);
             const desc = forest.children.get(id) || [];
             const isRoot = roots.has(id);
+            const label = showPrePost ? `${id}\npre:${pre} post:${post}` : String(id);
+            const title = showPrePost
+              ? (isRoot
+                ? `Root: ${id}\npre-order: ${pre}\npost-order: ${post}\ndescendants: [${desc.join(', ')}]`
+                : `Node: ${id}\nparent: ${forest.parent.get(id)}\npre-order: ${pre}\npost-order: ${post}\ndescendants: [${desc.join(', ')}]`)
+              : (isRoot
+                ? `Root: ${id}\ndescendants: [${desc.join(', ')}]`
+                : `Node: ${id}\nparent: ${forest.parent.get(id)}\ndescendants: [${desc.join(', ')}]`);
             
             return {
               id,
-              label: `${id}\npre:${pre} post:${post}`,
-              title: isRoot
-                ? `Root: ${id}\npre-order: ${pre}\npost-order: ${post}\ndescendants: [${desc.join(', ')}]`
-                : `Node: ${id}\nparent: ${forest.parent.get(id)}\npre-order: ${pre}\npost-order: ${post}\ndescendants: [${desc.join(', ')}]`,
+              label,
+              title,
               color: isRoot ? { background: '#7c4dff', border: '#9d79ff' } : { background: '#4a5568', border: '#718096' },
               font: { multi: true, size: 11 },
             };
@@ -802,7 +1020,138 @@
           }
         }
 
-        function formatDfsForestOutput(forest) {
+        function buildBfsTreeGraphData(bfsTree, showDistance) {
+          const root = bfsTree.root;
+          const nodeList = bfsTree.visitOrder.map((id) => {
+            const dist = bfsTree.distance.get(id);
+            const desc = bfsTree.children.get(id) || [];
+            const isRoot = id === root;
+            const label = showDistance ? `${id}\ndist:${dist}` : String(id);
+            const title = showDistance
+              ? (isRoot
+                ? `Root: ${id}\ndistance: ${dist}\ndescendants: [${desc.join(', ')}]`
+                : `Node: ${id}\nparent: ${bfsTree.parent.get(id)}\ndistance: ${dist}\ndescendants: [${desc.join(', ')}]`)
+              : (isRoot
+                ? `Root: ${id}\ndescendants: [${desc.join(', ')}]`
+                : `Node: ${id}\nparent: ${bfsTree.parent.get(id)}\ndescendants: [${desc.join(', ')}]`);
+
+            return {
+              id,
+              label,
+              title,
+              color: isRoot ? { background: '#7c4dff', border: '#9d79ff' } : { background: '#4a5568', border: '#718096' },
+              font: { multi: true, size: 11 },
+            };
+          });
+          const edgeList = [];
+          let edgeId = 0;
+          for (const [child, p] of bfsTree.parent) {
+            if (p != null) {
+              edgeList.push({ id: edgeId++, from: p, to: child, arrows: 'to' });
+            }
+          }
+          return { nodes: nodeList, edges: edgeList };
+        }
+
+        function renderBfsTreeGraph(data) {
+          const container = document.getElementById('bfs-tree-container');
+          if (!container) return;
+          if (bfsNetwork) {
+            bfsNetwork.destroy();
+            bfsNetwork = null;
+          }
+          if (!data.nodes || data.nodes.length === 0) {
+            container.innerHTML = '<div class="text-slate-400 text-sm p-4">No nodes to display</div>';
+            return;
+          }
+          const visData = {
+            nodes: new vis.DataSet(data.nodes),
+            edges: new vis.DataSet(data.edges),
+          };
+          const useHierarchical = data.edges.length > 0;
+          const options = {
+            nodes: { shape: 'dot', size: 16, font: { color: '#e2e8f0', size: 11 } },
+            edges: { color: { color: '#64748b' }, width: 2, arrows: { to: { enabled: true, scaleFactor: 0.5 } } },
+            layout: useHierarchical
+              ? { hierarchical: { enabled: true, direction: 'UD', sortMethod: 'directed', levelSeparation: 100, nodeSpacing: 150 } }
+              : { randomSeed: 42 },
+            physics: { enabled: !useHierarchical, stabilization: { iterations: 200 } },
+            interaction: { zoomView: true, dragView: true, hover: true },
+          };
+          try {
+            bfsNetwork = new vis.Network(container, visData, options);
+            if (!useHierarchical) {
+              bfsNetwork.once('stabilizationIterationsDone', () => bfsNetwork.setOptions({ physics: { enabled: false } }));
+            }
+            setTimeout(() => { if (bfsNetwork) bfsNetwork.fit({ animation: { duration: 500 } }); }, 100);
+          } catch (err) {
+            container.innerHTML = `<div class="text-red-400 text-sm p-4">Error: ${err.message}</div>`;
+          }
+        }
+
+        function buildDijkstraTreeGraphData(tree, showDistance) {
+          return buildBfsTreeGraphData(tree, showDistance);
+        }
+
+        function renderDijkstraTreeGraph(data) {
+          const container = document.getElementById('dijkstra-tree-container');
+          if (!container) return;
+          if (dijkstraNetwork) {
+            dijkstraNetwork.destroy();
+            dijkstraNetwork = null;
+          }
+          if (!data.nodes || data.nodes.length === 0) {
+            container.innerHTML = '<div class="text-slate-400 text-sm p-4">No nodes to display</div>';
+            return;
+          }
+          const visData = {
+            nodes: new vis.DataSet(data.nodes),
+            edges: new vis.DataSet(data.edges),
+          };
+          const useHierarchical = data.edges.length > 0;
+          const options = {
+            nodes: { shape: 'dot', size: 16, font: { color: '#e2e8f0', size: 11 } },
+            edges: { color: { color: '#64748b' }, width: 2, arrows: { to: { enabled: true, scaleFactor: 0.5 } } },
+            layout: useHierarchical
+              ? { hierarchical: { enabled: true, direction: 'UD', sortMethod: 'directed', levelSeparation: 100, nodeSpacing: 150 } }
+              : { randomSeed: 42 },
+            physics: { enabled: !useHierarchical, stabilization: { iterations: 200 } },
+            interaction: { zoomView: true, dragView: true, hover: true },
+          };
+          try {
+            dijkstraNetwork = new vis.Network(container, visData, options);
+            if (!useHierarchical) {
+              dijkstraNetwork.once('stabilizationIterationsDone', () => dijkstraNetwork.setOptions({ physics: { enabled: false } }));
+            }
+            setTimeout(() => { if (dijkstraNetwork) dijkstraNetwork.fit({ animation: { duration: 500 } }); }, 100);
+          } catch (err) {
+            container.innerHTML = `<div class="text-red-400 text-sm p-4">Error: ${err.message}</div>`;
+          }
+        }
+
+        function formatDijkstraTreeOutput(tree, showDistance) {
+          return formatBfsTreeOutput(tree, showDistance);
+        }
+
+        function formatBfsTreeOutput(bfsTree, showDistance) {
+          const lines = [];
+          lines.push(`Visit order (level by level): ${bfsTree.visitOrder.join(' → ')}`);
+          lines.push('');
+          lines.push(`Root: ${bfsTree.root}`);
+          const treeNodes = bfsTree.visitOrder;
+          treeNodes.forEach((n) => {
+            const p = bfsTree.parent.get(n);
+            const desc = bfsTree.children.get(n) || [];
+            const dist = bfsTree.distance.get(n);
+            const nodeLine = showDistance
+              ? `  ${n}: parent=${p ?? 'null'}, distance=${dist}, descendants=[${desc.join(', ')}]`
+              : `  ${n}: parent=${p ?? 'null'}, descendants=[${desc.join(', ')}]`;
+            lines.push(nodeLine);
+          });
+          return lines.join('\n');
+        }
+
+        function formatDfsForestOutput(forest, showPrePost) {
           const lines = [];
           lines.push(`Visit order: ${forest.visitOrder.join(' → ')}`);
           lines.push('');
@@ -820,7 +1169,10 @@
               const desc = forest.children.get(n) || [];
               const pre = forest.preOrder.get(n);
               const post = forest.postOrder.get(n);
-              lines.push(`  ${n}: parent=${p ?? 'null'}, pre=${pre}, post=${post}, descendants=[${desc.join(', ')}]`);
+              const nodeLine = showPrePost
+                ? `  ${n}: parent=${p ?? 'null'}, pre=${pre}, post=${post}, descendants=[${desc.join(', ')}]`
+                : `  ${n}: parent=${p ?? 'null'}, descendants=[${desc.join(', ')}]`;
+              lines.push(nodeLine);
             });
             lines.push('');
           });
@@ -844,7 +1196,7 @@
           }
 
           resetHighlight();
-          const adj = buildAdjacency(graphData.nodes, graphData.edges, isDirected);
+          const adj = buildAdjacency(graphData.nodes, graphData.edges);
           const { path, visited } = algoFn(adj, source, target);
 
           const resultEl = document.getElementById('path-result');
@@ -869,24 +1221,49 @@
 
         treeLikenessSlider.addEventListener('input', (e) => {
           treeLikenessValue.textContent = e.target.value;
+          updateTopologicalSortSectionVisibility();
         });
+
+        const directednessSlider = document.getElementById('directedness-slider');
+        const directednessValue = document.getElementById('directedness-value');
+
+        directednessSlider.addEventListener('input', (e) => {
+          directednessValue.textContent = e.target.value;
+          updateTopologicalSortSectionVisibility();
+        });
+
+        function updateTopologicalSortSectionVisibility() {
+          const section = document.getElementById('topological-sort-section');
+          const disabledDiv = document.getElementById('topological-sort-disabled');
+          const enabledDiv = document.getElementById('topological-sort-enabled');
+          const directed = parseInt(directednessSlider.value, 10) === 10;
+          const acyclic = parseInt(treeLikenessSlider.value, 10) === 0;
+          const isEnabled = directed && acyclic;
+          if (isEnabled) {
+            section.classList.remove('disabled');
+            disabledDiv.classList.add('hidden');
+            enabledDiv.classList.remove('hidden');
+          } else {
+            section.classList.add('disabled');
+            disabledDiv.classList.remove('hidden');
+            enabledDiv.classList.add('hidden');
+          }
+        }
 
         document.getElementById('load-sample').addEventListener('click', () => {
           const n = parseInt(document.getElementById('nodes-input').value, 10);
           const connectedness = parseInt(connectednessSlider.value, 10);
-          const treeLikeness = parseInt(treeLikenessSlider.value, 10);
+          const cyclicSlider = parseInt(treeLikenessSlider.value, 10);
+          const treeLikeness = 10 - cyclicSlider;
+          const directedness = parseInt(directednessSlider.value, 10);
           
           if (!n || n < 2 || n > 10000) {
             alert('Please enter a valid number of nodes (2-10000)');
             return;
           }
           
-          const { nodes, edges } = generateSampleGraph(n, connectedness, treeLikeness);
+          const { nodes, edges } = generateSampleGraph(n, connectedness, treeLikeness, directedness);
           loadGraph(nodes, edges);
-        });
-
-        document.querySelectorAll('input[name="graph-type"]').forEach((r) => {
-          r.addEventListener('change', updateGraph);
         });
 
         document.getElementById('fit-btn').addEventListener('click', () => {
@@ -929,7 +1306,7 @@
           runAlgorithm('Bellman-Ford', (adj, s, t) => bellmanFord(adj, s, t, [...adj.keys()]))
         );
 
-        document.getElementById('run-dfs-forest').addEventListener('click', async () => {
+        async function runDfsForest() {
           if (!graphData) {
             document.getElementById('dfs-forest-result').textContent = 'Load a graph first.';
             return;
@@ -953,7 +1330,7 @@
           progressPct.textContent = '0%';
           progressLabel.textContent = 'Running DFS...';
 
-          const adj = buildAdjacency(graphData.nodes, graphData.edges, isDirected);
+          const adj = buildAdjacency(graphData.nodes, graphData.edges);
           const totalNodes = graphData.nodes.length;
 
           const forest = await dfsForestWithProgress(adj, startNode, totalNodes, (visited, pct) => {
@@ -963,14 +1340,184 @@
           });
 
           progressEl.classList.add('hidden');
-          const forestData = buildForestGraphData(forest);
+          lastForest = forest;
+          const showPrePost = document.getElementById('dfs-show-prepost').checked;
+          const forestData = buildForestGraphData(forest, showPrePost);
           renderForestGraph(forestData);
-          document.getElementById('dfs-forest-result').textContent = formatDfsForestOutput(forest);
+          document.getElementById('dfs-forest-result').textContent = formatDfsForestOutput(forest, showPrePost);
+        }
+
+        function refreshForestDisplay() {
+          if (!lastForest) return;
+          const showPrePost = document.getElementById('dfs-show-prepost').checked;
+          const forestData = buildForestGraphData(lastForest, showPrePost);
+          renderForestGraph(forestData);
+          document.getElementById('dfs-forest-result').textContent = formatDfsForestOutput(lastForest, showPrePost);
+        }
+
+        document.getElementById('run-dfs-tree').addEventListener('click', runDfsForest);
+        document.getElementById('dfs-show-prepost').addEventListener('change', refreshForestDisplay);
+
+        function runBfsTree() {
+          if (!graphData) {
+            document.getElementById('bfs-tree-result').textContent = 'Load a graph first.';
+            return;
+          }
+          const startNode = document.getElementById('bfs-start-input').value.trim();
+          if (!startNode) {
+            document.getElementById('bfs-tree-result').textContent = 'Enter a start node.';
+            return;
+          }
+          if (!graphData.nodes.includes(startNode)) {
+            document.getElementById('bfs-tree-result').textContent = `Start node "${startNode}" not in graph. Available: ${graphData.nodes.slice(0, 20).join(', ')}${graphData.nodes.length > 20 ? '...' : ''}`;
+            return;
+          }
+          resetHighlight();
+          const adj = buildAdjacency(graphData.nodes, graphData.edges);
+          const tree = bfsTree(adj, startNode);
+          lastBfsTree = tree;
+          const showDistance = document.getElementById('bfs-show-distance').checked;
+          const treeData = buildBfsTreeGraphData(tree, showDistance);
+          renderBfsTreeGraph(treeData);
+          document.getElementById('bfs-tree-result').textContent = formatBfsTreeOutput(tree, showDistance);
+        }
+
+        function refreshBfsTreeDisplay() {
+          if (!lastBfsTree) return;
+          const showDistance = document.getElementById('bfs-show-distance').checked;
+          const treeData = buildBfsTreeGraphData(lastBfsTree, showDistance);
+          renderBfsTreeGraph(treeData);
+          document.getElementById('bfs-tree-result').textContent = formatBfsTreeOutput(lastBfsTree, showDistance);
+        }
+
+        document.getElementById('run-bfs-tree').addEventListener('click', runBfsTree);
+        document.getElementById('bfs-show-distance').addEventListener('change', refreshBfsTreeDisplay);
+        document.getElementById('bfs-tree-fit-btn').addEventListener('click', () => {
+          if (bfsNetwork) bfsNetwork.fit({ animation: true });
         });
 
-        document.getElementById('forest-fit-btn').addEventListener('click', () => {
+        function runDijkstraTree() {
+          if (!graphData) {
+            document.getElementById('dijkstra-tree-result').textContent = 'Load a graph first.';
+            return;
+          }
+          const startNode = document.getElementById('dijkstra-start-input').value.trim();
+          if (!startNode) {
+            document.getElementById('dijkstra-tree-result').textContent = 'Enter a start node.';
+            return;
+          }
+          if (!graphData.nodes.includes(startNode)) {
+            document.getElementById('dijkstra-tree-result').textContent = `Start node "${startNode}" not in graph. Available: ${graphData.nodes.slice(0, 20).join(', ')}${graphData.nodes.length > 20 ? '...' : ''}`;
+            return;
+          }
+          resetHighlight();
+          const adj = buildAdjacency(graphData.nodes, graphData.edges);
+          const tree = dijkstraTree(adj, startNode);
+          lastDijkstraTree = tree;
+          const showDistance = document.getElementById('dijkstra-show-distance').checked;
+          const treeData = buildDijkstraTreeGraphData(tree, showDistance);
+          renderDijkstraTreeGraph(treeData);
+          document.getElementById('dijkstra-tree-result').textContent = formatDijkstraTreeOutput(tree, showDistance);
+        }
+
+        function refreshDijkstraTreeDisplay() {
+          if (!lastDijkstraTree) return;
+          const showDistance = document.getElementById('dijkstra-show-distance').checked;
+          const treeData = buildDijkstraTreeGraphData(lastDijkstraTree, showDistance);
+          renderDijkstraTreeGraph(treeData);
+          document.getElementById('dijkstra-tree-result').textContent = formatDijkstraTreeOutput(lastDijkstraTree, showDistance);
+        }
+
+        document.getElementById('run-dijkstra-tree').addEventListener('click', runDijkstraTree);
+        document.getElementById('dijkstra-show-distance').addEventListener('change', refreshDijkstraTreeDisplay);
+        document.getElementById('dijkstra-tree-fit-btn').addEventListener('click', () => {
+          if (dijkstraNetwork) dijkstraNetwork.fit({ animation: true });
+        });
+
+        function runTopologicalSort() {
+          if (!graphData) {
+            document.getElementById('topological-sort-order').textContent = 'Load a graph first.';
+            return;
+          }
+          const adj = buildDirectedAdjacency(graphData.nodes, graphData.edges);
+          const order = topologicalSort(adj, graphData.nodes);
+          document.getElementById('topological-sort-order').textContent = `Order: ${order.join(' → ')}`;
+          const nodeList = order.map((id, i) => ({
+            id,
+            label: `${id}\n(${i + 1})`,
+            x: i * 120,
+            y: 250,
+            fixed: true,
+            color: { background: '#4a5568', border: '#718096' },
+            font: { color: '#e2e8f0', size: 11 },
+          }));
+          const edgeList = graphData.edges
+            .filter((e) => e.directed)
+            .map((e, i) => ({ id: i, from: e.from, to: e.to, arrows: 'to' }));
+          const container = document.getElementById('topological-sort-container');
+          if (topoNetwork) {
+            topoNetwork.destroy();
+            topoNetwork = null;
+          }
+          if (nodeList.length > 0) {
+            try {
+              topoNetwork = new vis.Network(container, {
+                nodes: new vis.DataSet(nodeList),
+                edges: new vis.DataSet(edgeList),
+              }, {
+                nodes: { shape: 'dot', size: 16 },
+                edges: { color: { color: '#64748b' }, width: 2, arrows: { to: { enabled: true, scaleFactor: 0.5 } } },
+                physics: { enabled: false },
+                interaction: { zoomView: true, dragView: true },
+              });
+              topoNetwork.fit({ animation: { duration: 500 } });
+            } catch (err) {
+              container.innerHTML = `<div class="text-red-400 text-sm p-4">Error: ${err.message}</div>`;
+            }
+          } else {
+            container.innerHTML = '<div class="text-slate-400 text-sm p-4">No nodes</div>';
+          }
+        }
+
+        document.getElementById('run-topological-sort').addEventListener('click', runTopologicalSort);
+
+        function runVerifyTopologicalSort() {
+          const resultEl = document.getElementById('topological-sort-verify-result');
+          resultEl.classList.remove('hidden');
+          if (!graphData) {
+            resultEl.textContent = 'Load a graph first.';
+            resultEl.className = 'mt-2 rounded-xl bg-ink-850/60 p-4 text-sm text-slate-200';
+            return;
+          }
+          const input = document.getElementById('topological-sort-verify-input').value.trim();
+          if (!input) {
+            resultEl.textContent = 'Enter an order to verify.';
+            resultEl.className = 'mt-2 rounded-xl bg-ink-850/60 p-4 text-sm text-slate-200';
+            return;
+          }
+          const order = input.split(/[\s,→]+/).map((s) => s.trim()).filter(Boolean);
+          const result = verifyTopologicalSort(order, graphData.nodes, graphData.edges);
+          resultEl.textContent = result.message;
+          resultEl.className = result.valid
+            ? 'mt-2 rounded-xl bg-ink-850/60 p-4 text-sm text-green-400'
+            : 'mt-2 rounded-xl bg-ink-850/60 p-4 text-sm text-red-400';
+        }
+
+        document.getElementById('verify-topological-sort').addEventListener('click', runVerifyTopologicalSort);
+
+        document.getElementById('dfs-tree-fit-btn').addEventListener('click', () => {
           if (forestNetwork) forestNetwork.fit({ animation: true });
         });
+
+        // Startup: generate default graph and run DFS, BFS, Dijkstra trees
+        (function init() {
+          updateTopologicalSortSectionVisibility();
+          const { nodes, edges } = generateSampleGraph(10, 5, 5, 0);
+          loadGraph(nodes, edges);
+          runDfsForest();
+          runBfsTree();
+          runDijkstraTree();
+        })();
       })();
     </script>
   </body>
